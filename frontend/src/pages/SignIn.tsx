@@ -10,8 +10,8 @@ export type SignInFormData = {
 };
 
 const SignIn = () => {
-    const {showToast} = useAppContext()
-    const navigate = useNavigate()
+    const { showToast } = useAppContext();
+    const navigate = useNavigate();
     const {
         register,
         formState: { errors },
@@ -20,11 +20,11 @@ const SignIn = () => {
 
     const mutation = useMutation(apiClient.signIn, {
         onSuccess: async () => {
-           showToast({message: "Sign in Successful", type: "SUCCESS"})
-           navigate("/")
+            showToast({ message: 'Sign in Successful', type: 'SUCCESS' });
+            navigate('/');
         },
         onError: (error: Error) => {
-            showToast({message: error.message, type: "ERROR"})
+            showToast({ message: error.message, type: 'ERROR' });
         },
     });
 
