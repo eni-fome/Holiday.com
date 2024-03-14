@@ -10,11 +10,13 @@ const router = express.Router();
 router.post(
     '/login',
     [
-        check('email', 'email is required').isEmail(),
+        check('email', 'Email is required').isEmail(),
         check(
             'password',
-            'Password with 6 or more characters is required',
-        ).isLength({ min: 6 }),
+            'Password with 6 or more characters required',
+        ).isLength({
+            min: 6,
+        }),
     ],
     async (req: Request, res: Response) => {
         const errors = validationResult(req);
@@ -42,6 +44,7 @@ router.post(
                     expiresIn: '1d',
                 },
             );
+
             res.cookie('auth_token', token, {
                 httpOnly: true,
                 secure: process.env.NODE_ENV === 'production',
