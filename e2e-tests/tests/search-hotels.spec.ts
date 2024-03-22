@@ -21,11 +21,11 @@ test.beforeEach(async ({ page }) => {
 test("should show hotel search results", async ({ page }) => {
   await page.goto(UI_URL);
 
-  await page.getByPlaceholder("Where are you going?").fill("Dublin");
+  await page.getByPlaceholder("Where are you going?").fill("Lagos");
   await page.getByRole("button", { name: "Search" }).click();
 
-  await expect(page.getByText("Hotels found in Dublin")).toBeVisible();
-  await expect(page.getByText("Dublin Getaways")).toBeVisible();
+  await expect(page.getByText("Hotels found in Lagos")).toBeVisible();
+  await expect(page.getByText("Naija heights")).toBeVisible();
 });
 
 test("should show hotel detail", async ({ page }) => {
