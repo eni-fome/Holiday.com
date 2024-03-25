@@ -25,7 +25,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 cors({
-    origin: "https://holiday-c8zb.onrender.com",
+    origin: process.env.FRONTEND_URL,
     credentials: true,
 });
 
