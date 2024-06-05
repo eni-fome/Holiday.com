@@ -24,7 +24,7 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cors({
-    origin: "http://localhost:5174",
+    origin: "https://holiday-c8zb.onrender.com",
     credentials: true,
 }));
 
