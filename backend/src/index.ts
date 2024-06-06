@@ -28,6 +28,9 @@ app.use(cors({
     credentials: true,
 }));
 
+// http://localhost:5174
+
+
 app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 
 app.use('/api/auth', authRoutes);
@@ -40,6 +43,6 @@ app.get('*', (req: Request, res: Response) => {
     res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
 });
 
-app.listen(7000, '0.0.0.0', () => {
+app.listen(7000, () => {
     console.log('Server is running on port 7000');
 });
