@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import { useMutation, useQueryClient } from "react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import * as apiClient from "../api-client";
 import { useAppContext } from "../contexts/AppContext";
 import { useNavigate } from "react-router-dom";
@@ -24,14 +24,16 @@ const Register = () => {
     formState: { errors },
   } = useForm<RegisterFormData>();
 
-  const mutation = useMutation(apiClient.register, {
+  const mutation = useMutation({
+    mutationFn: apiClient.register,
     onSuccess: async () => {
       showToast({ message: "Registration Success!", type: "SUCCESS" });
-      await queryClient.invalidateQueries("validateToken");
+      await queryClient.invalidateQueries({ queryKey: ["validateToken"] });
       navigate("/");
     },
     onError: (error: Error) => {
-      showToast({ message: error.message, type: "ERROR" });
+      const errorMsg = error?.message || 'Registration failed';
+      showToast({ message: errorMsg, type: "ERROR" });
     },
   });
 
@@ -114,7 +116,8 @@ const Register = () => {
       <span>
         <button
           type="submit"
-          className="bg-blue-600 text-white p-2 font-bold hover:bg-blue-500 text-xl"
+          disabled={mutation.isPending}
+          className="bg-blue-600 text-white p-2 font-bold hover:bg-blue-500 text-xl disabled:bg-gray-500"
         >
           Create Account
         </button>

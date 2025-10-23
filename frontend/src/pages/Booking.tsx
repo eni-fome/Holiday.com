@@ -1,4 +1,4 @@
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import * as apiClient from "../api-client";
 import BookingForm from "../forms/BookingForm/BookingForm";
 import { useSearchContext } from "../contexts/SearchContext";
@@ -25,33 +25,36 @@ const Booking = () => {
     }
   }, [search.checkIn, search.checkOut]);
 
-  const { data: paymentIntentData } = useQuery(
-    "createPaymentIntent",
-    () =>
+  const { data: paymentIntentData, isError: isPaymentError } = useQuery({
+    queryKey: ["createPaymentIntent", hotelId, numberOfNights],
+    queryFn: () =>
       apiClient.createPaymentIntent(
         hotelId as string,
         numberOfNights.toString()
       ),
-    {
-      enabled: !!hotelId && numberOfNights > 0,
-    }
-  );
+    enabled: !!hotelId && numberOfNights > 0,
+    retry: 1,
+  });
 
-  const { data: hotel } = useQuery(
-    "fetchHotelByID",
-    () => apiClient.fetchHotelById(hotelId as string),
-    {
-      enabled: !!hotelId,
-    }
-  );
+  const { data: hotel, isLoading: isHotelLoading, isError: isHotelError } = useQuery({
+    queryKey: ["fetchHotelById", hotelId],
+    queryFn: () => apiClient.fetchHotelById(hotelId as string),
+    enabled: !!hotelId,
+    retry: 1,
+  });
 
-  const { data: currentUser } = useQuery(
-    "fetchCurrentUser",
-    apiClient.fetchCurrentUser
-  );
+  const { data: currentUser, isError: isUserError } = useQuery({
+    queryKey: ["fetchCurrentUser"],
+    queryFn: apiClient.fetchCurrentUser,
+    retry: 1,
+  });
 
-  if (!hotel) {
-    return <></>;
+  if (isHotelError || isPaymentError || isUserError) {
+    return <div className="text-center py-10"><p className="text-red-500">Error loading booking information.</p></div>;
+  }
+
+  if (isHotelLoading || !hotel) {
+    return <div className="text-center py-10">Loading...</div>;
   }
 
   return (

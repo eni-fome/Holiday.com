@@ -1,8 +1,8 @@
-import React, { useContext, useState } from "react";
+import React, { useContext } from "react";
 import Toast from "../components/Toast";
-import { useQuery } from "react-query";
-import * as apiClient from "../api-client";
 import { loadStripe, Stripe } from "@stripe/stripe-js";
+import { useAuthStore } from "../store/auth.store";
+import { useToastStore } from "../store/toast.store";
 
 const STRIPE_PUB_KEY = import.meta.env.VITE_STRIPE_PUB_KEY || "";
 
@@ -26,19 +26,14 @@ export const AppContextProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [toast, setToast] = useState<ToastMessage | undefined>(undefined);
-
-  const { isError } = useQuery("validateToken", apiClient.validateToken, {
-    retry: false,
-  });
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { toast, showToast, hideToast } = useToastStore();
 
   return (
     <AppContext.Provider
       value={{
-        showToast: (toastMessage) => {
-          setToast(toastMessage);
-        },
-        isLoggedIn: !isError,
+        showToast,
+        isLoggedIn: isAuthenticated,
         stripePromise,
       }}
     >
@@ -46,7 +41,7 @@ export const AppContextProvider = ({
         <Toast
           message={toast.message}
           type={toast.type}
-          onClose={() => setToast(undefined)}
+          onClose={hideToast}
         />
       )}
       {children}

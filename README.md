@@ -11,6 +11,7 @@ Welcome to the Holiday.com! This application allows users to search for hotels, 
 - [Technologies Used](#technologies-used)
 - [Installation](#installation)
 - [Usage](#usage)
+- [Security](#security)
 - [Testing](#testing)
 - [Live Demo](#live-demo)
 - [License](#license)
@@ -52,9 +53,22 @@ The Hotel Booking Web App is a full-stack web application built using React Type
 
 1. Clone the repository.
 2. Navigate to the project directory.
-3. Install dependencies using `npm install`.
-4. Set up environment variables for configuration.
-5. Run the development server using `npm start`.
+3. Install dependencies:
+   ```bash
+   cd backend && npm install
+   cd ../frontend && npm install
+   ```
+4. Set up environment variables:
+   - Copy `backend/.env.example` to `backend/.env`
+   - Fill in your actual credentials (never commit this file)
+5. Run the development servers:
+   ```bash
+   # Backend
+   cd backend && npm run dev
+   
+   # Frontend
+   cd frontend && npm run dev
+   ```
 
 ## Usage
 
@@ -62,6 +76,20 @@ The Hotel Booking Web App is a full-stack web application built using React Type
 2. Search for hotels based on location, date, and other criteria.
 3. Select a hotel and make a booking.
 4. Complete the payment process securely using Stripe.
+
+## Security
+
+This application implements multiple security measures:
+
+- **CSRF Protection**: All state-changing requests protected
+- **Rate Limiting**: Prevents brute force and DoS attacks
+- **Input Validation**: Zod schemas validate all inputs
+- **NoSQL Injection Prevention**: Sanitized database queries
+- **XSS Protection**: Sanitized outputs and security headers
+- **SSRF Prevention**: URL validation for external requests
+- **Secure Authentication**: JWT with refresh tokens
+
+⚠️ **Important**: Never commit `.env` files. See [SECURITY.md](SECURITY.md) for detailed security guidelines.
 
 ## Testing
 

@@ -1,4 +1,4 @@
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useSearchContext } from "../contexts/SearchContext";
 import * as apiClient from "../api-client";
 import { useState } from "react";
@@ -32,9 +32,19 @@ const Search = () => {
     sortOption,
   };
 
-  const { data: hotelData } = useQuery(["searchHotels", searchParams], () =>
-    apiClient.searchHotels(searchParams)
-  );
+  const { data: hotelData, isError } = useQuery({
+    queryKey: ["searchHotels", searchParams],
+    queryFn: () => apiClient.searchHotels(searchParams),
+    retry: 1,
+  });
+
+  if (isError) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-red-500">Error loading search results. Please try again.</p>
+      </div>
+    );
+  }
 
   const handleStarsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const starRating = event.target.value;
@@ -115,7 +125,7 @@ const Search = () => {
           </select>
         </div>
         {hotelData?.data.map((hotel) => (
-          <SearchResultsCard hotel={hotel} />
+          <SearchResultsCard key={hotel._id} hotel={hotel} />
         ))}
         <div>
           <Pagination

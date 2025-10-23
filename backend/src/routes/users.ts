@@ -1,71 +1,57 @@
-import express, { Request, Response } from "express";
-import User from "../models/user";
-import jwt from "jsonwebtoken";
-import { check, validationResult } from "express-validator";
-import verifyToken from "../middleware/auth";
+import express, { Request, Response } from 'express';
+import User from '../models/user';
+import { AuthService } from '../services/auth.service';
+import { validate } from '../middleware/validate';
+import { registerSchema } from '../schemas/auth.schema';
+import { verifyToken } from '../middleware/auth';
 
 const router = express.Router();
 
-router.get("/me", verifyToken, async (req: Request, res: Response) => {
-  const userId = req.userId;
-
+/**
+ * GET /api/users/me
+ * Get current user profile
+ */
+router.get('/me', verifyToken, async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(userId).select("-password");
+    const user = await User.findById(req.userId).select('-password');
+
     if (!user) {
-      return res.status(400).json({ message: "User not found" });
+      return res.status(404).json({ message: 'User not found' });
     }
+
     res.json(user);
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "something went wrong" });
+    res.status(500).json({ message: 'Failed to fetch user' });
   }
 });
 
+/**
+ * POST /api/users/register
+ * Register new user
+ */
 router.post(
-  "/register",
-  [
-    check("firstName", "First Name is required").isString(),
-    check("lastName", "Last Name is required").isString(),
-    check("email", "Email is required").isEmail(),
-    check("password", "Password with 6 or more characters required").isLength({
-      min: 6,
-    }),
-  ],
+  '/register',
+  validate(registerSchema),
   async (req: Request, res: Response) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ message: errors.array() });
-    }
-
     try {
-      let user = await User.findOne({
-        email: req.body.email,
+      const { email, password, firstName, lastName } = req.body;
+
+      const result = await AuthService.register({
+        email,
+        password,
+        firstName,
+        lastName,
       });
 
-      if (user) {
-        return res.status(400).json({ message: "User already exists" });
-      }
-
-      user = new User(req.body);
-      await user.save();
-
-      const token = jwt.sign(
-        { userId: user.id },
-        process.env.JWT_SECRET_KEY as string,
-        {
-          expiresIn: "1d",
-        }
-      );
-
-      res.cookie("auth_token", token, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        maxAge: 86400000,
+      res.status(201).json({
+        message: 'User registered successfully',
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        user: result.user,
       });
-      return res.status(200).send({ message: "User registered OK" });
     } catch (error) {
-      console.log(error);
-      res.status(500).send({ message: "Something went wrong" });
+      const message = error instanceof Error ? error.message : 'Registration failed';
+      res.status(400).json({ message });
     }
   }
 );

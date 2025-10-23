@@ -45,25 +45,33 @@ const GuestInfoForm = ({ hotelId, pricePerNight }: Props) => {
     maxDate.setFullYear(maxDate.getFullYear() + 1);
 
     const onSignInClick = (data: GuestInfoFormData) => {
-        search.saveSearchValues(
-            '',
-            data.checkIn,
-            data.checkOut,
-            data.adultCount,
-            data.childCount,
-        );
-        navigate('/sign-in', { state: { from: location } });
+        try {
+            search.saveSearchValues(
+                '',
+                data.checkIn,
+                data.checkOut,
+                data.adultCount,
+                data.childCount,
+            );
+            navigate('/sign-in', { state: { from: location } });
+        } catch (error) {
+            console.error('Error saving search values:', error);
+        }
     };
 
     const onSubmit = (data: GuestInfoFormData) => {
-        search.saveSearchValues(
-            '',
-            data.checkIn,
-            data.checkOut,
-            data.adultCount,
-            data.childCount,
-        );
-        navigate(`/hotel/${hotelId}/booking`);
+        try {
+            search.saveSearchValues(
+                '',
+                data.checkIn,
+                data.checkOut,
+                data.adultCount,
+                data.childCount,
+            );
+            navigate(`/hotel/${hotelId}/booking`);
+        } catch (error) {
+            console.error('Error navigating to booking:', error);
+        }
     };
 
     return (
