@@ -1,4 +1,4 @@
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useSearchContext } from "../contexts/SearchContext";
 import * as apiClient from "../api-client";
 import { useState } from "react";
@@ -32,9 +32,10 @@ const Search = () => {
     sortOption,
   };
 
-  const { data: hotelData } = useQuery(["searchHotels", searchParams], () =>
-    apiClient.searchHotels(searchParams)
-  );
+  const { data: hotelData } = useQuery({
+    queryKey: ["searchHotels", searchParams],
+    queryFn: () => apiClient.searchHotels(searchParams),
+  });
 
   const handleStarsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const starRating = event.target.value;
