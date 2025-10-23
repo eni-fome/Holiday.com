@@ -1,62 +1,72 @@
-import express, { Request, Response } from "express";
-import { check, validationResult } from "express-validator";
-import User from "../models/user";
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import verifyToken from "../middleware/auth";
+import express, { Request, Response } from 'express';
+import { AuthService } from '../services/auth.service';
+import { validate } from '../middleware/validate';
+import { loginSchema, refreshTokenSchema } from '../schemas/auth.schema';
+import { verifyToken } from '../middleware/auth';
 
 const router = express.Router();
 
+/**
+ * POST /api/auth/login
+ * Login with email and password
+ */
 router.post(
-  "/login",
-  [
-    check("email", "Email is required").isEmail(),
-    check("password", "Password with 6 or more characters required").isLength({
-      min: 6,
-    }),
-  ],
+  '/login',
+  validate(loginSchema),
   async (req: Request, res: Response) => {
-    const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ message: errors.array() });
-    }
-
-    const { email, password } = req.body;
-
     try {
-      const user = await User.findOne({ email });
-      if (!user) {
-        return res.status(400).json({ message: "Invalid Credentials" });
-      }
+      const { email, password } = req.body;
 
-      const isMatch = await bcrypt.compare(password, user.password);
-      if (!isMatch) {
-        return res.status(400).json({ message: "Invalid Credentials" });
-      }
+      const result = await AuthService.login(email, password);
 
-      const token = jwt.sign(
-        { userId: user.id },
-        process.env.JWT_SECRET_KEY as string,
-        {
-          expiresIn: "1d",
-        }
-      );
-
-      
-      res.status(200).json({ token, userId: user._id });
+      res.status(200).json({
+        accessToken: result.accessToken,
+        refreshToken: result.refreshToken,
+        user: result.user,
+      });
     } catch (error) {
-      console.log(error);
-      res.status(500).json({ message: "Something went wrong" });
+      const message = error instanceof Error ? error.message : 'Login failed';
+      res.status(401).json({ message });
     }
   }
 );
 
-router.get("/validate-token", verifyToken, (req: Request, res: Response) => {
-  res.status(200).send({ userId: req.userId });
+/**
+ * GET /api/auth/validate-token
+ * Validate current access token
+ */
+router.get('/validate-token', verifyToken, (req: Request, res: Response) => {
+  res.status(200).json({ userId: req.userId });
 });
 
-router.post("/logout", (req: Request, res: Response) => {
-  res.send();
+/**
+ * POST /api/auth/refresh
+ * Refresh access token using refresh token
+ */
+router.post(
+  '/refresh',
+  validate(refreshTokenSchema),
+  async (req: Request, res: Response) => {
+    try {
+      const { refreshToken } = req.body;
+
+      const tokens = await AuthService.refreshToken(refreshToken);
+
+      res.status(200).json(tokens);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Token refresh failed';
+      res.status(401).json({ message });
+    }
+  }
+);
+
+/**
+ * POST /api/auth/logout
+ * Logout (client-side token removal)
+ */
+router.post('/logout', (req: Request, res: Response) => {
+  // Token is removed on client side
+  res.status(200).json({ message: 'Logged out successfully' });
 });
 
 export default router;

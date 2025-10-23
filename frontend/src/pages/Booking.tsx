@@ -1,4 +1,4 @@
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import * as apiClient from "../api-client";
 import BookingForm from "../forms/BookingForm/BookingForm";
 import { useSearchContext } from "../contexts/SearchContext";
@@ -25,30 +25,26 @@ const Booking = () => {
     }
   }, [search.checkIn, search.checkOut]);
 
-  const { data: paymentIntentData } = useQuery(
-    "createPaymentIntent",
-    () =>
+  const { data: paymentIntentData } = useQuery({
+    queryKey: ["createPaymentIntent", hotelId, numberOfNights],
+    queryFn: () =>
       apiClient.createPaymentIntent(
         hotelId as string,
         numberOfNights.toString()
       ),
-    {
-      enabled: !!hotelId && numberOfNights > 0,
-    }
-  );
+    enabled: !!hotelId && numberOfNights > 0,
+  });
 
-  const { data: hotel } = useQuery(
-    "fetchHotelByID",
-    () => apiClient.fetchHotelById(hotelId as string),
-    {
-      enabled: !!hotelId,
-    }
-  );
+  const { data: hotel } = useQuery({
+    queryKey: ["fetchHotelById", hotelId],
+    queryFn: () => apiClient.fetchHotelById(hotelId as string),
+    enabled: !!hotelId,
+  });
 
-  const { data: currentUser } = useQuery(
-    "fetchCurrentUser",
-    apiClient.fetchCurrentUser
-  );
+  const { data: currentUser } = useQuery({
+    queryKey: ["fetchCurrentUser"],
+    queryFn: apiClient.fetchCurrentUser,
+  });
 
   if (!hotel) {
     return <></>;

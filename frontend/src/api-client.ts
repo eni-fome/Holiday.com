@@ -7,144 +7,80 @@ import {
   UserType,
 } from "../../backend/src/shared/types";
 import { BookingFormData } from "./forms/BookingForm/BookingForm";
-const API_BASE_URL = "https://holiday-com-backend.onrender.com";
-
-
-// Function to get token from localStorage
-const getToken = () => {
-  return localStorage.getItem("auth_token");
-};
-
-// Set up headers to include the Authorization header
-const getHeaders = () => {
-  const token = getToken();
-  return {
-    "Content-Type": "application/json",
-    ...(token && { Authorization: `Bearer ${token}` }),
-  };
-}
+import { apiClient } from "./api/client";
+import { useAuthStore } from "./store/auth.store";
 
 export const fetchCurrentUser = async (): Promise<UserType> => {
-  const response = await fetch(`${API_BASE_URL}/api/users/me`, {
-    headers: getHeaders(),
-  });
-  if (!response.ok) {
-    throw new Error("Error fetching user");
-  }
-  return response.json();
+  return apiClient.get<UserType>("/api/users/me", true);
 };
 
 export const register = async (formData: RegisterFormData) => {
-  const response = await fetch(`${API_BASE_URL}/api/users/register`, {
-    method: "POST",
-    headers: getHeaders(),
-    body: JSON.stringify(formData),
-  });
+  const response = await apiClient.post<{
+    accessToken: string;
+    refreshToken: string;
+    user: UserType;
+  }>("/api/users/register", formData, false);
 
-  const responseBody = await response.json();
+  // Store auth tokens in Zustand
+  useAuthStore.getState().setAuth(
+    response.accessToken,
+    response.refreshToken,
+    response.user
+  );
 
-  if (!response.ok) {
-    throw new Error(responseBody.message);
-  }
+  return response;
 };
 
 
 export const signIn = async (formData: SignInFormData) => {
-  const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify(formData),
-  });
+  const response = await apiClient.post<{
+    accessToken: string;
+    refreshToken: string;
+    user: UserType;
+  }>("/api/auth/login", formData, false);
 
-  const body = await response.json();
-  if (!response.ok) {
-    throw new Error(body.message);
-  }
+  // Store auth tokens in Zustand
+  useAuthStore.getState().setAuth(
+    response.accessToken,
+    response.refreshToken,
+    response.user
+  );
 
-  // Save the token in localStorage
-  localStorage.setItem("auth_token", body.token);
-  return body;
+  return response;
 };
 
 
 export const validateToken = async () => {
-  const response = await fetch(`${API_BASE_URL}/api/auth/validate-token`, {
-    headers: getHeaders(),
-  });
-
-  if (!response.ok) {
-    throw new Error("Token invalid");
-  }
-
-  return response.json();
+  return apiClient.get("/api/auth/validate-token", true);
 };
 
 export const signOut = async () => {
-  localStorage.removeItem("auth_token");
-  const response = await fetch(`${API_BASE_URL}/api/auth/logout`, {
-    method: "POST",
-  });
+  // Clear auth from Zustand (also clears localStorage via persist)
+  useAuthStore.getState().clearAuth();
 
-  if (!response.ok) {
-    throw new Error("Error during sign out");
+  try {
+    await apiClient.post("/api/auth/logout", {}, false);
+  } catch (error) {
+    // Ignore logout errors - user is already signed out locally
+    console.warn("Logout request failed:", error);
   }
 };
 
 export const addMyHotel = async (hotelFormData: FormData) => {
-  const response = await fetch(`${API_BASE_URL}/api/my-hotels`, {
-    method: "POST",
-    credentials: "include",
-    body: hotelFormData,
-  });
-
-  if (!response.ok) {
-    throw new Error("Failed to add hotel");
-  }
-
-  return response.json();
+  return apiClient.post<HotelType>("/api/my-hotels", hotelFormData, true);
 };
 
 export const fetchMyHotels = async (): Promise<HotelType[]> => {
-  const response = await fetch(`${API_BASE_URL}/api/my-hotels`, {
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    throw new Error("Error fetching hotels");
-  }
-
-  return response.json();
+  return apiClient.get<HotelType[]>("/api/my-hotels", true);
 };
 
 export const fetchMyHotelById = async (hotelId: string): Promise<HotelType> => {
-  const response = await fetch(`${API_BASE_URL}/api/my-hotels/${hotelId}`, {
-    credentials: "include",
-  });
-
-  if (!response.ok) {
-    throw new Error("Error fetching Hotels");
-  }
-
-  return response.json();
+  return apiClient.get<HotelType>(`/api/my-hotels/${hotelId}`, true);
 };
 
 export const updateMyHotelById = async (hotelFormData: FormData) => {
-  const response = await fetch(
-    `${API_BASE_URL}/api/my-hotels/${hotelFormData.get("hotelId")}`,
-    {
-      method: "PUT",
-      body: hotelFormData,
-      credentials: "include",
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error("Failed to update Hotel");
-  }
-
-  return response.json();
+  const hotelId = hotelFormData.get("hotelId");
+  return apiClient.put<HotelType>(`/api/my-hotels/${hotelId}`, hotelFormData, true);
 };
 
 export type SearchParams = {
@@ -182,83 +118,34 @@ export const searchHotels = async (
   searchParams.types?.forEach((type) => queryParams.append("types", type));
   searchParams.stars?.forEach((star) => queryParams.append("stars", star));
 
-  const response = await fetch(`${API_BASE_URL}/api/hotels/search?${queryParams}`, {
-    headers: getHeaders(),
-  });
-
-  if (!response.ok) {
-    throw new Error("Error fetching hotels");
-  }
-
-  return response.json();
+  return apiClient.get<HotelSearchResponse>(`/api/hotels/search?${queryParams}`, false);
 };
 
 
 
 export const fetchHotels = async (): Promise<HotelType[]> => {
-  const response = await fetch(`${API_BASE_URL}/api/hotels`, {
-    headers: getHeaders(),
-  });
-  if (!response.ok) {
-    throw new Error("Error fetching hotels");
-  }
-  return response.json();
+  return apiClient.get<HotelType[]>("/api/hotels", false);
 };
 
 export const fetchHotelById = async (hotelId: string): Promise<HotelType> => {
-  const response = await fetch(`${API_BASE_URL}/api/hotels/${hotelId}`, {
-    headers: getHeaders(),
-  });
-  if (!response.ok) {
-    throw new Error("Error fetching Hotels");
-  }
-
-  return response.json();
+  return apiClient.get<HotelType>(`/api/hotels/${hotelId}`, false);
 };
 
 export const createPaymentIntent = async (
   hotelId: string,
   numberOfNights: string
 ): Promise<PaymentIntentResponse> => {
-  const response = await fetch(
-    `${API_BASE_URL}/api/hotels/${hotelId}/bookings/payment-intent`,
-    {
-      method: "POST",
-      body: JSON.stringify({ numberOfNights }),
-      headers: getHeaders(),
-    }
+  return apiClient.post<PaymentIntentResponse>(
+    `/api/hotels/${hotelId}/bookings/payment-intent`,
+    { numberOfNights },
+    true
   );
-
-  if (!response.ok) {
-    throw new Error("Error fetching payment intent");
-  }
-
-  return response.json();
 };
 
 export const createRoomBooking = async (formData: BookingFormData) => {
-  const response = await fetch(
-    `${API_BASE_URL}/api/hotels/${formData.hotelId}/bookings`,
-    {
-      method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify(formData),
-    }
-  );
-
-  if (!response.ok) {
-    throw new Error("Error booking room");
-  }
+  return apiClient.post(`/api/hotels/${formData.hotelId}/bookings`, formData, true);
 };
 
 export const fetchMyBookings = async (): Promise<HotelType[]> => {
-  const response = await fetch(`${API_BASE_URL}/api/my-bookings`, {
-    headers: getHeaders(),
-  });
-
-  if (!response.ok) {
-    throw new Error("Unable to fetch bookings");
-  }
-
-  return response.json();
+  return apiClient.get<HotelType[]>("/api/my-bookings", true);
 };
