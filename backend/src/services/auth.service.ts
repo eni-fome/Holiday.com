@@ -47,7 +47,12 @@ export class AuthService {
    * Login user with email and password
    */
   static async login(email: string, password: string) {
-    const user = await User.findOne({ email });
+    if (!email || typeof email !== 'string' || !password || typeof password !== 'string') {
+      throw new Error('Invalid credentials');
+    }
+    
+    const sanitizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: sanitizedEmail }).select('+password');
 
     if (!user) {
       throw new Error('Invalid credentials');
@@ -81,13 +86,21 @@ export class AuthService {
     firstName: string;
     lastName: string;
   }) {
-    const existingUser = await User.findOne({ email: userData.email });
+    if (!userData.email || typeof userData.email !== 'string') {
+      throw new Error('Invalid email');
+    }
+    
+    const sanitizedEmail = userData.email.toLowerCase().trim();
+    const existingUser = await User.findOne({ email: sanitizedEmail });
 
     if (existingUser) {
       throw new Error('User already exists');
     }
 
-    const user = new User(userData);
+    const user = new User({
+      ...userData,
+      email: sanitizedEmail
+    });
     await user.save();
 
     const tokens = await this.generateTokenPair(user.id);

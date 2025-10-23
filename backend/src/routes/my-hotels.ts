@@ -29,13 +29,19 @@ router.post(
       // Upload images to Cloudinary
       const imageUrls = await uploadImages(imageFiles);
 
-      const hotelData = {
-        ...req.body,
+      const allowedFields = ['name', 'city', 'country', 'description', 'type', 'adultCount', 'childCount', 'facilities', 'pricePerNight', 'starRating'];
+      const hotelData: any = {
         imageUrls,
         userId: req.userId,
         lastUpdated: new Date(),
         isActive: true,
       };
+      
+      allowedFields.forEach(field => {
+        if (req.body[field] !== undefined) {
+          hotelData[field] = req.body[field];
+        }
+      });
 
       const hotel = await HotelService.createHotel(hotelData);
       res.status(201).json(hotel);
@@ -81,14 +87,20 @@ router.put(
       const files = req.files as Express.Multer.File[];
       const newImageUrls = files.length > 0 ? await uploadImages(files) : [];
 
-      const updatedData = {
-        ...req.body,
+      const allowedFields = ['name', 'city', 'country', 'description', 'type', 'adultCount', 'childCount', 'facilities', 'pricePerNight', 'starRating'];
+      const updatedData: any = {
         imageUrls: [
           ...newImageUrls,
           ...(req.body.imageUrls || []),
         ],
         lastUpdated: new Date(),
       };
+      
+      allowedFields.forEach(field => {
+        if (req.body[field] !== undefined) {
+          updatedData[field] = req.body[field];
+        }
+      });
 
       const hotel = await HotelService.updateHotel(
         req.params.hotelId,

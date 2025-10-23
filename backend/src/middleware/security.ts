@@ -11,6 +11,21 @@ export const setupSecurity = (app: Express) => {
   app.use(
     helmet({
       crossOriginResourcePolicy: { policy: 'cross-origin' },
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'"],
+          imgSrc: ["'self'", 'data:', 'https://res.cloudinary.com'],
+          connectSrc: ["'self'", 'https://api.stripe.com'],
+          frameSrc: ["'self'", 'https://js.stripe.com'],
+        },
+      },
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      },
     })
   );
 
@@ -25,6 +40,9 @@ export const setupSecurity = (app: Express) => {
     standardHeaders: true,
     legacyHeaders: false,
     skipSuccessfulRequests: true,
+    handler: (req, res) => {
+      res.status(429).json({ message: 'Too many login attempts, please try again later' });
+    },
   });
 
   // General API rate limiting
@@ -34,6 +52,9 @@ export const setupSecurity = (app: Express) => {
     message: 'Too many requests, please try again later',
     standardHeaders: true,
     legacyHeaders: false,
+    handler: (req, res) => {
+      res.status(429).json({ message: 'Too many requests, please try again later' });
+    },
   });
 
   // Payment endpoint rate limiting (stricter)

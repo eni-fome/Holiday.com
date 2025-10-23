@@ -2,6 +2,7 @@ import express, { Request, Response } from 'express';
 import cors from 'cors';
 import 'dotenv/config';
 import mongoose from 'mongoose';
+import mongoSanitize from 'express-mongo-sanitize';
 import userRoutes from './routes/users';
 import authRoutes from './routes/auth';
 import cookieParser from 'cookie-parser';
@@ -12,6 +13,7 @@ import hotelRoutes from './routes/hotels';
 import bookingRoutes from './routes/my-bookings';
 import { setupSecurity } from './middleware/security';
 import { connectDatabase } from './config/database';
+import { csrfProtection, csrfTokenRoute } from './middleware/csrf';
 
 // Cloudinary configuration
 cloudinary.config({
@@ -22,7 +24,7 @@ cloudinary.config({
 
 // Connect to MongoDB with indexes
 connectDatabase().catch((error) => {
-    console.error('Failed to connect to database:', error);
+    console.error('Failed to connect to database:', error?.message || 'Unknown error');
     process.exit(1);
 });
 
@@ -31,10 +33,13 @@ const app = express();
 // Security middleware (helmet, compression, rate limiting)
 const { authLimiter, apiLimiter, paymentLimiter, uploadLimiter } = setupSecurity(app);
 
-// Body parsing
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Body parsing with size limits
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+
+// Sanitize data to prevent NoSQL injection
+app.use(mongoSanitize());
 
 // CORS configuration - supports both Bearer tokens and cookies
 const allowedOrigins = [
@@ -63,12 +68,15 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// API routes with rate limiting
-app.use('/api/auth', authLimiter, authRoutes);
-app.use('/api/users', apiLimiter, userRoutes);
-app.use('/api/my-hotels', uploadLimiter, myHotelRoutes);
-app.use('/api/hotels', apiLimiter, hotelRoutes);
-app.use('/api/my-bookings', apiLimiter, bookingRoutes);
+// CSRF token endpoint
+app.get('/api/csrf-token', csrfTokenRoute);
+
+// API routes with rate limiting and CSRF protection
+app.use('/api/auth', authLimiter, csrfProtection, authRoutes);
+app.use('/api/users', apiLimiter, csrfProtection, userRoutes);
+app.use('/api/my-hotels', uploadLimiter, csrfProtection, myHotelRoutes);
+app.use('/api/hotels', apiLimiter, csrfProtection, hotelRoutes);
+app.use('/api/my-bookings', apiLimiter, csrfProtection, bookingRoutes);
 
 // SPA fallback
 app.get('*', (req: Request, res: Response) => {
@@ -88,6 +96,8 @@ app.use((err: Error, req: Request, res: Response, next: Function) => {
 const PORT = process.env.PORT || 7000;
 
 app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PORT}`);
-    console.log(`📝 Environment: ${process.env.NODE_ENV || 'development'}`);
+    const sanitizedPort = String(PORT).replace(/[^0-9]/g, '');
+    const sanitizedEnv = (process.env.NODE_ENV || 'development').replace(/[^a-zA-Z]/g, '');
+    console.log(`🚀 Server running on port ${sanitizedPort}`);
+    console.log(`📝 Environment: ${sanitizedEnv}`);
 });

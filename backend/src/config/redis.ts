@@ -10,7 +10,7 @@ const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379', {
 });
 
 redis.on('error', (err) => {
-  console.error('Redis error:', err);
+  console.error('Redis error:', err?.message?.replace(/[\r\n]/g, '') || 'Unknown error');
 });
 
 redis.on('connect', () => {
@@ -23,7 +23,7 @@ redis.on('ready', () => {
 
 // Graceful connection - don't fail if Redis is down
 redis.connect().catch((err) => {
-  console.warn('⚠️  Redis not available, continuing without cache:', err.message);
+  console.warn('⚠️  Redis not available, continuing without cache:', err?.message?.replace(/[\r\n]/g, '') || 'Unknown error');
 });
 
 export default redis;

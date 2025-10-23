@@ -9,11 +9,15 @@ export const escapeRegex = (str: string): string => {
  * Sanitize search query parameters to prevent injection attacks
  */
 export const sanitizeSearchQuery = (queryParams: any) => {
+  if (!queryParams || typeof queryParams !== 'object') {
+    return { isActive: true };
+  }
+  
   const sanitized: any = {};
 
   // Destination search with escaped regex
-  if (queryParams.destination) {
-    const escaped = escapeRegex(queryParams.destination.trim());
+  if (queryParams.destination && typeof queryParams.destination === 'string') {
+    const escaped = escapeRegex(queryParams.destination.trim().substring(0, 100));
     sanitized.$or = [
       { city: new RegExp(escaped, 'i') },
       { country: new RegExp(escaped, 'i') },
@@ -23,7 +27,7 @@ export const sanitizeSearchQuery = (queryParams: any) => {
   // Adult count filter
   if (queryParams.adultCount) {
     const count = parseInt(queryParams.adultCount);
-    if (!isNaN(count) && count > 0) {
+    if (!isNaN(count) && count > 0 && count <= 50) {
       sanitized.adultCount = { $gte: count };
     }
   }
@@ -31,7 +35,7 @@ export const sanitizeSearchQuery = (queryParams: any) => {
   // Child count filter
   if (queryParams.childCount) {
     const count = parseInt(queryParams.childCount);
-    if (!isNaN(count) && count >= 0) {
+    if (!isNaN(count) && count >= 0 && count <= 50) {
       sanitized.childCount = { $gte: count };
     }
   }

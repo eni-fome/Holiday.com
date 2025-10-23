@@ -5,15 +5,18 @@ import "./index.css";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppContextProvider } from "./contexts/AppContext.tsx";
 import { SearchContextProvider } from "./contexts/SearchContext.tsx";
+import { fetchCsrfToken } from "./utils/csrf.ts";
 
 // Migration: Move old auth_token to new Zustand store
 if (typeof window !== 'undefined') {
   const oldToken = localStorage.getItem('auth_token');
   if (oldToken && !localStorage.getItem('auth-storage')) {
-    console.log('Migrating old auth token to new storage format...');
     // User will need to re-login to get refresh token
     localStorage.removeItem('auth_token');
   }
+  
+  // Fetch CSRF token on app initialization
+  fetchCsrfToken().catch(err => console.error('Failed to initialize CSRF token:', err));
 }
 
 const queryClient = new QueryClient({

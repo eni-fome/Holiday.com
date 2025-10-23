@@ -18,8 +18,8 @@ export const validate = (schema: ZodSchema) => {
         return res.status(400).json({
           message: 'Validation error',
           errors: error.issues.map((e: ZodIssue) => ({
-            field: e.path.join('.'),
-            message: e.message,
+            field: e.path.join('.').replace(/[<>"'&]/g, ''),
+            message: e.message.replace(/[<>"'&]/g, ''),
           })),
         });
       }

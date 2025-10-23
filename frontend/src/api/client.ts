@@ -1,4 +1,5 @@
 import { useAuthStore } from '../store/auth.store';
+import { fetchCsrfToken, getCsrfToken } from '../utils/csrf';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://holiday-com-backend.onrender.com';
 
@@ -10,12 +11,32 @@ class ApiClient {
   private baseUrl: string;
   private isRefreshing = false;
   private refreshQueue: Array<() => void> = [];
+  private readonly allowedHosts = ['holiday-com-backend.onrender.com', 'localhost'];
 
   constructor(baseUrl: string) {
+    this.validateBaseUrl(baseUrl);
     this.baseUrl = baseUrl;
   }
 
-  private getHeaders(includeContentType = true): HeadersInit {
+  private validateBaseUrl(url: string): void {
+    try {
+      const parsed = new URL(url);
+      const isAllowed = this.allowedHosts.some(host => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`));
+      if (!isAllowed) {
+        throw new Error('Invalid API base URL');
+      }
+    } catch {
+      throw new Error('Invalid API base URL');
+    }
+  }
+
+  private validateEndpoint(endpoint: string): void {
+    if (!endpoint.startsWith('/')) {
+      throw new Error('Invalid endpoint');
+    }
+  }
+
+  private async getHeaders(includeContentType = true): Promise<HeadersInit> {
     const { accessToken } = useAuthStore.getState();
     const headers: HeadersInit = {};
 
@@ -25,6 +46,11 @@ class ApiClient {
 
     if (accessToken) {
       headers['Authorization'] = `Bearer ${accessToken}`;
+    }
+
+    const csrfToken = getCsrfToken();
+    if (csrfToken) {
+      headers['x-csrf-token'] = csrfToken;
     }
 
     return headers;
@@ -79,10 +105,11 @@ class ApiClient {
   }
 
   async request<T>(endpoint: string, options: FetchOptions = {}): Promise<T> {
+    this.validateEndpoint(endpoint);
     const { requiresAuth = false, ...fetchOptions } = options;
 
     const makeRequest = async (): Promise<Response> => {
-      const headers = new Headers(this.getHeaders(options.body instanceof FormData ? false : true));
+      const headers = new Headers(await this.getHeaders(options.body instanceof FormData ? false : true));
 
       // Merge custom headers
       if (fetchOptions.headers) {

@@ -1,5 +1,19 @@
 import mongoose from 'mongoose';
 
+const validateMongoUri = (uri: string): void => {
+  if (!uri.startsWith('mongodb://') && !uri.startsWith('mongodb+srv://')) {
+    throw new Error('Invalid MongoDB connection string protocol');
+  }
+  
+  const url = new URL(uri.replace('mongodb+srv://', 'https://').replace('mongodb://', 'http://'));
+  if (url.hostname.includes('localhost') || url.hostname.includes('127.0.0.1')) {
+    return;
+  }
+  if (!url.hostname.includes('mongodb.net') && !url.hostname.includes('mongo')) {
+    throw new Error('Invalid MongoDB host');
+  }
+};
+
 export const connectDatabase = async () => {
   try {
     const connectionString = process.env.MONGODB_CONNECTION_STRING;
@@ -8,6 +22,7 @@ export const connectDatabase = async () => {
       throw new Error('MONGODB_CONNECTION_STRING is not defined');
     }
 
+    validateMongoUri(connectionString);
     await mongoose.connect(connectionString);
 
     console.log('✅ MongoDB connected successfully');
