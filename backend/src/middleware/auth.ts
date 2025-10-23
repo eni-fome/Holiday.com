@@ -56,4 +56,3 @@ export const optionalAuth = async (
   next();
 };
 
-export default verifyToken;
