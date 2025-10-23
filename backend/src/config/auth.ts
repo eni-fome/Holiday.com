@@ -15,7 +15,7 @@ export const authConfig = {
         expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || '15m',
     },
     refresh: {
-        secret: getEnvVar('JWT_REFRESH_SECRET_KEY'),
+        secret: process.env.JWT_REFRESH_SECRET_KEY || process.env.JWT_SECRET_KEY || '',
         expiresIn: process.env.JWT_REFRESH_TOKEN_EXPIRES_IN || '30d',
     },
 };

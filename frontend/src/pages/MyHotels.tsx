@@ -1,17 +1,14 @@
-import { useQuery } from 'react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import * as apiClient from '../api-client';
 import { BsBuilding, BsMap } from 'react-icons/bs';
 import { BiHotel, BiMoney, BiStar } from 'react-icons/bi';
 
 const MyHotels = () => {
-    const { data: hotelData } = useQuery(
-        'fetchMyHotels',
-        apiClient.fetchMyHotels,
-        {
-            onError: () => {},
-        },
-    );
+    const { data: hotelData } = useQuery({
+        queryKey: ['fetchMyHotels'],
+        queryFn: apiClient.fetchMyHotels,
+    });
 
     if (!hotelData) {
         return <span>No Hotels found</span>;
@@ -29,7 +26,7 @@ const MyHotels = () => {
                 </Link>
             </span>
             <div className="grid grid-cols-1 gap-8">
-                {hotelData.map((hotel) => (
+                {hotelData?.map((hotel: any) => (
                     <div
                         data-testid="hotel-card"
                         className="flex flex-col justify-between border border-slate-300 rounded-lg p-8 gap-5"
