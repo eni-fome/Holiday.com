@@ -33,7 +33,7 @@ export class BookingService {
     }
 
     // Check for date conflicts with existing bookings
-    const hasConflict = hotel.bookings.some((booking) => {
+    const hasConflict = hotel.bookings.some((booking: BookingType) => {
       // Skip cancelled bookings
       if (booking.status === 'cancelled') {
         return false;
@@ -198,9 +198,9 @@ export class BookingService {
     }).lean();
 
     // Map hotels to include only user's bookings
-    const results = hotels.map((hotel) => {
+    const results = hotels.map((hotel: any) => {
       const userBookings = hotel.bookings.filter(
-        (booking) => booking.userId === userId && booking.status !== 'cancelled'
+        (booking: any) => booking.userId === userId && booking.status !== 'cancelled'
       );
 
       return {
@@ -232,7 +232,7 @@ export class BookingService {
       }
 
       const booking = hotel.bookings.find(
-        (b) => b._id.toString() === bookingId && b.userId === userId
+        (b: BookingType) => b._id.toString() === bookingId && b.userId === userId
       );
 
       if (!booking) {

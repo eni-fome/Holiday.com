@@ -7,7 +7,7 @@ import { CardElement, useElements, useStripe } from '@stripe/react-stripe-js';
 import { StripeCardElement } from '@stripe/stripe-js';
 import { useSearchContext } from '../../contexts/SearchContext';
 import { useParams } from 'react-router-dom';
-import { useMutation } from 'react-query';
+import { useMutation } from '@tanstack/react-query';
 import * as apiClient from '../../api-client';
 import { useAppContext } from '../../contexts/AppContext';
 
@@ -38,17 +38,15 @@ const BookingForm = ({ currentUser, paymentIntent }: Props) => {
 
     const { showToast } = useAppContext();
 
-    const { mutate: bookRoom, isLoading } = useMutation(
-        apiClient.createRoomBooking,
-        {
-            onSuccess: () => {
-                showToast({ message: 'Booking Saved!', type: 'SUCCESS' });
-            },
-            onError: () => {
-                showToast({ message: 'Error saving booking', type: 'ERROR' });
-            },
+    const { mutate: bookRoom, isPending } = useMutation({
+        mutationFn: apiClient.createRoomBooking,
+        onSuccess: () => {
+            showToast({ message: 'Booking Saved!', type: 'SUCCESS' });
         },
-    );
+        onError: () => {
+            showToast({ message: 'Error saving booking', type: 'ERROR' });
+        },
+    });
 
     const { handleSubmit, register } = useForm<BookingFormData>({
         defaultValues: {
@@ -144,11 +142,11 @@ const BookingForm = ({ currentUser, paymentIntent }: Props) => {
 
             <div className="flex justify-end">
                 <button
-                    disabled={isLoading}
+                    disabled={isPending}
                     type="submit"
                     className="bg-blue-600 text-white p-2 font-bold hover:bg-blue-500 text-md disabled:bg-gray-500"
                 >
-                    {isLoading ? 'Saving...' : 'Confirm Booking'}
+                    {isPending ? 'Saving...' : 'Confirm Booking'}
                 </button>
             </div>
         </form>
