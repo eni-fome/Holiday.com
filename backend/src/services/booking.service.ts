@@ -232,7 +232,7 @@ export class BookingService {
       }
 
       const booking = hotel.bookings.find(
-        (b: any) => b._id.toString() === bookingId && b.userId === userId
+        (b: BookingType) => b._id.toString() === bookingId && b.userId === userId
       );
 
       if (!booking) {
