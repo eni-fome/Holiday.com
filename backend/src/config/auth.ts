@@ -12,7 +12,7 @@ const getEnvVar = (name: string): string => {
 export const authConfig = {
     jwt: {
         secret: getEnvVar('JWT_SECRET_KEY'),
-        expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || '7d',
+        expiresIn: process.env.JWT_ACCESS_TOKEN_EXPIRES_IN || '15m',
     },
     refresh: {
         secret: getEnvVar('JWT_REFRESH_SECRET_KEY'),
