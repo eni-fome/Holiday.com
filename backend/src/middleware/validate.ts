@@ -5,16 +5,12 @@ import { ZodSchema, ZodError, ZodIssue } from 'zod';
  * Middleware to validate request data using Zod schemas
  */
 const sanitizeString = (str: string): string => {
-  return str.replace(/[<>"'&]/g, (char) => {
-    const entities: Record<string, string> = {
-      '<': '&lt;',
-      '>': '&gt;',
-      '"': '&quot;',
-      "'": '&#x27;',
-      '&': '&amp;'
-    };
-    return entities[char] || char;
-  });
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#x27;');
 };
 
 export const validate = (schema: ZodSchema) => {

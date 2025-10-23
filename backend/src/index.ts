@@ -89,7 +89,7 @@ app.get('*', (req: Request, res: Response) => {
 });
 
 // Error handling middleware
-app.use((err: Error, req: Request, res: Response, next: Function) => {
+app.use((err: Error, req: Request, res: Response, next: express.NextFunction) => {
     const errorMsg = err?.message || 'Unknown error';
     console.error('Unhandled error:', sanitizeLogMessage(errorMsg));
     res.status(500).json({
