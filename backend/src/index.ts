@@ -65,9 +65,6 @@ app.use(cors({
 }))
 
 
-// Static files
-app.use(express.static(path.join(__dirname, '../../frontend/dist')));
-
 // Health check
 app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
@@ -82,11 +79,6 @@ app.use('/api/users', apiLimiter, csrfProtection, userRoutes);
 app.use('/api/my-hotels', uploadLimiter, csrfProtection, myHotelRoutes);
 app.use('/api/hotels', apiLimiter, csrfProtection, hotelRoutes);
 app.use('/api/my-bookings', apiLimiter, csrfProtection, bookingRoutes);
-
-// SPA fallback
-app.get('*', (req: Request, res: Response) => {
-    res.sendFile(path.join(__dirname, '../../frontend/dist/index.html'));
-});
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: express.NextFunction) => {
