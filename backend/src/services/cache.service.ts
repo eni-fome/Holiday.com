@@ -70,7 +70,16 @@ export class CacheService {
    * Generate consistent cache key
    */
   static cacheKey(prefix: string, params: any): string {
-    const sanitized = JSON.stringify(params, Object.keys(params).sort());
+    let sanitized: string;
+    if (
+      params &&
+      typeof params === 'object' &&
+      !Array.isArray(params)
+    ) {
+      sanitized = JSON.stringify(params, Object.keys(params).sort());
+    } else {
+      sanitized = JSON.stringify(params);
+    }
     return `${prefix}:${sanitized}`;
   }
 

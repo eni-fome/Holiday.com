@@ -36,7 +36,7 @@ router.get(
 router.get('/', async (req: Request, res: Response) => {
   try {
     const limit = Math.min(parseInt((req.query.limit as string) || '6'), 50);
-    if (isNaN(limit) || limit < 1) {
+    if (isNaN(limit) || limit <= 0) {
       return res.status(400).json({ message: 'Invalid limit parameter' });
     }
     const hotels = await HotelService.getLatestHotels(limit);
