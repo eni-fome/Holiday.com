@@ -1,6 +1,6 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://holiday-com-backend.onrender.com';
 
-let csrfToken: string | null = null;
+let csrfToken: string = '';
 
 export const fetchCsrfToken = async (): Promise<string> => {
   if (csrfToken) return csrfToken;
@@ -10,7 +10,7 @@ export const fetchCsrfToken = async (): Promise<string> => {
       credentials: 'include',
     });
     const data = await response.json();
-    csrfToken = data.token;
+    csrfToken = data.token || '';
     return csrfToken;
   } catch (error) {
     console.error('Failed to fetch CSRF token:', error);
@@ -18,8 +18,8 @@ export const fetchCsrfToken = async (): Promise<string> => {
   }
 };
 
-export const getCsrfToken = (): string | null => csrfToken;
+export const getCsrfToken = (): string => csrfToken;
 
 export const clearCsrfToken = (): void => {
-  csrfToken = null;
+  csrfToken = '';
 };

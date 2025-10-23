@@ -8,14 +8,15 @@ export class HotelService {
    * Search hotels with caching and optimized aggregation
    */
   static async searchHotels(queryParams: any): Promise<HotelSearchResponse> {
-    const cacheKey = CacheService.cacheKey('hotel:search', queryParams);
-    const cached = await CacheService.get<HotelSearchResponse>(cacheKey);
+    try {
+      const cacheKey = CacheService.cacheKey('hotel:search', queryParams);
+      const cached = await CacheService.get<HotelSearchResponse>(cacheKey);
 
-    if (cached) {
-      return cached;
-    }
+      if (cached) {
+        return cached;
+      }
 
-    const query = sanitizeSearchQuery(queryParams);
+      const query = sanitizeSearchQuery(queryParams);
 
     // Sorting options
     let sortOptions: any = {};
@@ -70,10 +71,14 @@ export class HotelService {
       },
     };
 
-    // Cache for 5 minutes
-    await CacheService.set(cacheKey, response, 300);
+      // Cache for 5 minutes
+      await CacheService.set(cacheKey, response, 300);
 
-    return response;
+      return response;
+    } catch (error) {
+      console.error('Search hotels error:', error);
+      throw new Error('Failed to search hotels');
+    }
   }
 
   /**
@@ -103,27 +108,36 @@ export class HotelService {
    * Get hotel by ID (public view - no bookings)
    */
   static async getHotelById(id: string, includeBookings: boolean = false) {
-    const cacheKey = `hotel:${id}:${includeBookings}`;
-    const cached = await CacheService.get(cacheKey);
-
-    if (cached) {
-      return cached;
+    if (!id || typeof id !== 'string') {
+      throw new Error('Invalid hotel ID');
     }
+    
+    try {
+      const cacheKey = `hotel:${id}:${includeBookings}`;
+      const cached = await CacheService.get(cacheKey);
 
-    const query = Hotel.findById(id);
+      if (cached) {
+        return cached;
+      }
 
-    if (!includeBookings) {
-      query.select('-bookings');
+      const query = Hotel.findById(id);
+
+      if (!includeBookings) {
+        query.select('-bookings');
+      }
+
+      const hotel = await query.lean();
+
+      if (hotel) {
+        // Cache for 10 minutes
+        await CacheService.set(cacheKey, hotel, 600);
+      }
+
+      return hotel;
+    } catch (error) {
+      console.error('Get hotel by ID error:', error);
+      throw new Error('Failed to fetch hotel');
     }
-
-    const hotel = await query.lean();
-
-    if (hotel) {
-      // Cache for 10 minutes
-      await CacheService.set(cacheKey, hotel, 600);
-    }
-
-    return hotel;
   }
 
   /**
@@ -176,23 +190,28 @@ export class HotelService {
     userId: string,
     hotelData: any
   ) {
-    const hotel = await Hotel.findOneAndUpdate(
-      { _id: hotelId, userId, isActive: true },
-      {
-        ...hotelData,
-        lastUpdated: new Date(),
-      },
-      { new: true }
-    );
+    try {
+      const hotel = await Hotel.findOneAndUpdate(
+        { _id: hotelId, userId, isActive: true },
+        {
+          ...hotelData,
+          lastUpdated: new Date(),
+        },
+        { new: true }
+      );
 
-    if (!hotel) {
-      return null;
+      if (!hotel) {
+        return null;
+      }
+
+      // Invalidate caches
+      await CacheService.invalidateHotelCache(hotelId);
+
+      return hotel;
+    } catch (error) {
+      console.error('Update hotel error:', error);
+      throw new Error('Failed to update hotel');
     }
-
-    // Invalidate caches
-    await CacheService.invalidateHotelCache(hotelId);
-
-    return hotel;
   }
 
   /**

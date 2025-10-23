@@ -7,13 +7,14 @@ export class CacheService {
    * Get cached value
    */
   static async get<T>(key: string): Promise<T | null> {
-    if (!this.isRedisAvailable) return null;
+    if (!this.isRedisAvailable || !key) return null;
 
     try {
       const cached = await redis.get(key);
       return cached ? JSON.parse(cached) : null;
     } catch (error) {
-      console.warn('Cache GET error:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.warn('Cache GET error:', errorMsg);
       this.isRedisAvailable = false;
       return null;
     }
@@ -23,12 +24,13 @@ export class CacheService {
    * Set cache value with TTL (time to live in seconds)
    */
   static async set(key: string, value: any, ttl: number = 300): Promise<void> {
-    if (!this.isRedisAvailable) return;
+    if (!this.isRedisAvailable || !key) return;
 
     try {
       await redis.setex(key, ttl, JSON.stringify(value));
     } catch (error) {
-      console.warn('Cache SET error:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.warn('Cache SET error:', errorMsg);
       this.isRedisAvailable = false;
     }
   }
@@ -37,12 +39,13 @@ export class CacheService {
    * Delete single cache key
    */
   static async del(key: string): Promise<void> {
-    if (!this.isRedisAvailable) return;
+    if (!this.isRedisAvailable || !key) return;
 
     try {
       await redis.del(key);
     } catch (error) {
-      console.warn('Cache DEL error:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.warn('Cache DEL error:', errorMsg);
     }
   }
 
@@ -50,7 +53,7 @@ export class CacheService {
    * Delete all keys matching pattern
    */
   static async delPattern(pattern: string): Promise<void> {
-    if (!this.isRedisAvailable) return;
+    if (!this.isRedisAvailable || !pattern) return;
 
     try {
       const keys = await redis.keys(pattern);
@@ -58,7 +61,8 @@ export class CacheService {
         await redis.del(...keys);
       }
     } catch (error) {
-      console.warn('Cache DEL PATTERN error:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
+      console.warn('Cache DEL PATTERN error:', errorMsg);
     }
   }
 

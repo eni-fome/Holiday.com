@@ -20,7 +20,7 @@ const AddHotel = () => {
     mutate(hotelFormData);
   };
 
-  return <ManageHotelForm onSave={handleSave} isPending={isPending} />;
+  return <ManageHotelForm onSave={handleSave} isLoading={isPending} />;
 };
 
 export default AddHotel;

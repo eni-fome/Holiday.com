@@ -1,5 +1,5 @@
 import { useAuthStore } from '../store/auth.store';
-import { fetchCsrfToken, getCsrfToken } from '../utils/csrf';
+import { getCsrfToken } from '../utils/csrf';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://holiday-com-backend.onrender.com';
 
@@ -19,8 +19,14 @@ class ApiClient {
   }
 
   private validateBaseUrl(url: string): void {
+    if (!url || typeof url !== 'string') {
+      throw new Error('Invalid API base URL');
+    }
     try {
       const parsed = new URL(url);
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        throw new Error('Invalid protocol');
+      }
       const isAllowed = this.allowedHosts.some(host => parsed.hostname === host || parsed.hostname.endsWith(`.${host}`));
       if (!isAllowed) {
         throw new Error('Invalid API base URL');
@@ -152,10 +158,12 @@ class ApiClient {
 
   // Convenience methods
   async get<T>(endpoint: string, requiresAuth = false): Promise<T> {
+    this.validateEndpoint(endpoint);
     return this.request<T>(endpoint, { method: 'GET', requiresAuth });
   }
 
   async post<T>(endpoint: string, data: any, requiresAuth = false): Promise<T> {
+    this.validateEndpoint(endpoint);
     return this.request<T>(endpoint, {
       method: 'POST',
       body: data instanceof FormData ? data : JSON.stringify(data),
@@ -164,6 +172,7 @@ class ApiClient {
   }
 
   async put<T>(endpoint: string, data: any, requiresAuth = false): Promise<T> {
+    this.validateEndpoint(endpoint);
     return this.request<T>(endpoint, {
       method: 'PUT',
       body: data instanceof FormData ? data : JSON.stringify(data),
@@ -172,6 +181,7 @@ class ApiClient {
   }
 
   async delete<T>(endpoint: string, requiresAuth = false): Promise<T> {
+    this.validateEndpoint(endpoint);
     return this.request<T>(endpoint, { method: 'DELETE', requiresAuth });
   }
 }

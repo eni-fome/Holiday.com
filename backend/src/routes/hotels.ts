@@ -35,11 +35,15 @@ router.get(
  */
 router.get('/', async (req: Request, res: Response) => {
   try {
-    const limit = parseInt((req.query.limit as string) || '6');
+    const limit = Math.min(parseInt((req.query.limit as string) || '6'), 50);
+    if (isNaN(limit) || limit < 1) {
+      return res.status(400).json({ message: 'Invalid limit parameter' });
+    }
     const hotels = await HotelService.getLatestHotels(limit);
     res.json(hotels);
   } catch (error) {
-    console.error('Fetch hotels error:', error);
+    const message = error instanceof Error ? error.message : 'Failed to fetch hotels';
+    console.error('Fetch hotels error:', message);
     res.status(500).json({ message: 'Failed to fetch hotels' });
   }
 });
@@ -84,10 +88,17 @@ router.post(
           .json({ message: 'Check-in and check-out dates required' });
       }
 
+      const checkInDate = new Date(checkIn);
+      const checkOutDate = new Date(checkOut);
+      
+      if (isNaN(checkInDate.getTime()) || isNaN(checkOutDate.getTime())) {
+        return res.status(400).json({ message: 'Invalid date format' });
+      }
+
       const isAvailable = await BookingService.checkAvailability(
         req.params.hotelId,
-        new Date(checkIn),
-        new Date(checkOut)
+        checkInDate,
+        checkOutDate
       );
 
       res.json({ available: isAvailable });

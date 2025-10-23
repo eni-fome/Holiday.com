@@ -10,10 +10,17 @@ const userSchema = new mongoose.Schema({
 });
 
 userSchema.pre("save", async function (next) {
-  if (this.isModified("password")) {
-    this.password = await bcrypt.hash(this.password, 8);
+  try {
+    if (this.isModified("password")) {
+      if (!this.password || typeof this.password !== 'string') {
+        throw new Error('Invalid password');
+      }
+      this.password = await bcrypt.hash(this.password, 12);
+    }
+    next();
+  } catch (error) {
+    next(error as Error);
   }
-  next();
 });
 
 const User = mongoose.model<UserType>("User", userSchema);

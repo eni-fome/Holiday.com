@@ -4,7 +4,13 @@ import { BookingType } from '../shared/types';
 import Stripe from 'stripe';
 import { CacheService } from './cache.service';
 
-const stripe = new Stripe(process.env.STRIPE_API_KEY as string);
+const getStripeClient = (): Stripe => {
+  const apiKey = process.env.STRIPE_API_KEY;
+  if (!apiKey) {
+    throw new Error('STRIPE_API_KEY is not configured');
+  }
+  return new Stripe(apiKey);
+};
 const COMMISSION_RATE = 0.15; // 15% platform commission
 
 export class BookingService {
@@ -16,6 +22,10 @@ export class BookingService {
     checkIn: Date,
     checkOut: Date
   ): Promise<boolean> {
+    if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+      throw new Error('Invalid hotel ID');
+    }
+    
     const hotel = await Hotel.findById(hotelId);
 
     if (!hotel) {
@@ -44,6 +54,10 @@ export class BookingService {
     numberOfNights: number,
     userId: string
   ) {
+    if (!mongoose.Types.ObjectId.isValid(hotelId)) {
+      throw new Error('Invalid hotel ID');
+    }
+    
     const hotel = await Hotel.findById(hotelId);
 
     if (!hotel) {
@@ -58,6 +72,7 @@ export class BookingService {
     const commission = Math.round(totalCost * COMMISSION_RATE);
     const hostPayout = totalCost - commission;
 
+    const stripe = getStripeClient();
     const paymentIntent = await stripe.paymentIntents.create({
       amount: totalCost * 100, // Convert to cents
       currency: 'usd',
@@ -97,6 +112,7 @@ export class BookingService {
 
     try {
       // 1. Verify payment intent
+      const stripe = getStripeClient();
       const paymentIntent = await stripe.paymentIntents.retrieve(
         paymentIntentId
       );

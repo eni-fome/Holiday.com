@@ -1,16 +1,24 @@
 import mongoose from 'mongoose';
 
+const sanitizeForLog = (str: string): string => {
+  return str.replace(/[\r\n]/g, '').substring(0, 100);
+};
+
 const validateMongoUri = (uri: string): void => {
   if (!uri.startsWith('mongodb://') && !uri.startsWith('mongodb+srv://')) {
     throw new Error('Invalid MongoDB connection string protocol');
   }
   
-  const url = new URL(uri.replace('mongodb+srv://', 'https://').replace('mongodb://', 'http://'));
-  if (url.hostname.includes('localhost') || url.hostname.includes('127.0.0.1')) {
-    return;
-  }
-  if (!url.hostname.includes('mongodb.net') && !url.hostname.includes('mongo')) {
-    throw new Error('Invalid MongoDB host');
+  try {
+    const url = new URL(uri.replace('mongodb+srv://', 'https://').replace('mongodb://', 'http://'));
+    if (url.hostname.includes('localhost') || url.hostname.includes('127.0.0.1')) {
+      return;
+    }
+    if (!url.hostname.includes('mongodb.net') && !url.hostname.includes('mongo')) {
+      throw new Error('Invalid MongoDB host');
+    }
+  } catch (error) {
+    throw new Error('Invalid MongoDB connection string format');
   }
 };
 

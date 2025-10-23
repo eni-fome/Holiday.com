@@ -32,7 +32,8 @@ const Register = () => {
       navigate("/");
     },
     onError: (error: Error) => {
-      showToast({ message: error.message, type: "ERROR" });
+      const errorMsg = error?.message || 'Registration failed';
+      showToast({ message: errorMsg, type: "ERROR" });
     },
   });
 
@@ -115,7 +116,8 @@ const Register = () => {
       <span>
         <button
           type="submit"
-          className="bg-blue-600 text-white p-2 font-bold hover:bg-blue-500 text-xl"
+          disabled={mutation.isPending}
+          className="bg-blue-600 text-white p-2 font-bold hover:bg-blue-500 text-xl disabled:bg-gray-500"
         >
           Create Account
         </button>

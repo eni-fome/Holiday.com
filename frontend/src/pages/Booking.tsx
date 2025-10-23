@@ -25,7 +25,7 @@ const Booking = () => {
     }
   }, [search.checkIn, search.checkOut]);
 
-  const { data: paymentIntentData } = useQuery({
+  const { data: paymentIntentData, isError: isPaymentError } = useQuery({
     queryKey: ["createPaymentIntent", hotelId, numberOfNights],
     queryFn: () =>
       apiClient.createPaymentIntent(
@@ -33,21 +33,28 @@ const Booking = () => {
         numberOfNights.toString()
       ),
     enabled: !!hotelId && numberOfNights > 0,
+    retry: 1,
   });
 
-  const { data: hotel } = useQuery({
+  const { data: hotel, isLoading: isHotelLoading, isError: isHotelError } = useQuery({
     queryKey: ["fetchHotelById", hotelId],
     queryFn: () => apiClient.fetchHotelById(hotelId as string),
     enabled: !!hotelId,
+    retry: 1,
   });
 
-  const { data: currentUser } = useQuery({
+  const { data: currentUser, isError: isUserError } = useQuery({
     queryKey: ["fetchCurrentUser"],
     queryFn: apiClient.fetchCurrentUser,
+    retry: 1,
   });
 
-  if (!hotel) {
-    return <></>;
+  if (isHotelError || isPaymentError || isUserError) {
+    return <div className="text-center py-10"><p className="text-red-500">Error loading booking information.</p></div>;
+  }
+
+  if (isHotelLoading || !hotel) {
+    return <div className="text-center py-10">Loading...</div>;
   }
 
   return (

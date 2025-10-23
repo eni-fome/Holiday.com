@@ -4,6 +4,19 @@ import { ZodSchema, ZodError, ZodIssue } from 'zod';
 /**
  * Middleware to validate request data using Zod schemas
  */
+const sanitizeString = (str: string): string => {
+  return str.replace(/[<>"'&]/g, (char) => {
+    const entities: Record<string, string> = {
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#x27;',
+      '&': '&amp;'
+    };
+    return entities[char] || char;
+  });
+};
+
 export const validate = (schema: ZodSchema) => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
@@ -18,8 +31,8 @@ export const validate = (schema: ZodSchema) => {
         return res.status(400).json({
           message: 'Validation error',
           errors: error.issues.map((e: ZodIssue) => ({
-            field: e.path.join('.').replace(/[<>"'&]/g, ''),
-            message: e.message.replace(/[<>"'&]/g, ''),
+            field: sanitizeString(e.path.join('.')),
+            message: sanitizeString(e.message),
           })),
         });
       }

@@ -22,9 +22,14 @@ cloudinary.config({
     api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
+const sanitizeLogMessage = (msg: string): string => {
+  return msg.replace(/[\r\n]/g, '').substring(0, 200);
+};
+
 // Connect to MongoDB with indexes
 connectDatabase().catch((error) => {
-    console.error('Failed to connect to database:', error?.message || 'Unknown error');
+    const errorMsg = error?.message || 'Unknown error';
+    console.error('Failed to connect to database:', sanitizeLogMessage(errorMsg));
     process.exit(1);
 });
 
@@ -85,11 +90,12 @@ app.get('*', (req: Request, res: Response) => {
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: Function) => {
-    console.error('Unhandled error:', err);
+    const errorMsg = err?.message || 'Unknown error';
+    console.error('Unhandled error:', sanitizeLogMessage(errorMsg));
     res.status(500).json({
         message: process.env.NODE_ENV === 'production'
             ? 'Internal server error'
-            : err.message,
+            : sanitizeLogMessage(errorMsg),
     });
 });
 

@@ -32,10 +32,19 @@ const Search = () => {
     sortOption,
   };
 
-  const { data: hotelData } = useQuery({
+  const { data: hotelData, isError } = useQuery({
     queryKey: ["searchHotels", searchParams],
     queryFn: () => apiClient.searchHotels(searchParams),
+    retry: 1,
   });
+
+  if (isError) {
+    return (
+      <div className="text-center py-10">
+        <p className="text-red-500">Error loading search results. Please try again.</p>
+      </div>
+    );
+  }
 
   const handleStarsChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const starRating = event.target.value;
@@ -116,7 +125,7 @@ const Search = () => {
           </select>
         </div>
         {hotelData?.data.map((hotel) => (
-          <SearchResultsCard hotel={hotel} />
+          <SearchResultsCard key={hotel._id} hotel={hotel} />
         ))}
         <div>
           <Pagination
