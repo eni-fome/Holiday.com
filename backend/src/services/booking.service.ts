@@ -33,7 +33,7 @@ export class BookingService {
     }
 
     // Check for date conflicts with existing bookings
-    const hasConflict = hotel.bookings.some((booking: any) => {
+    const hasConflict = hotel.bookings.some((booking: BookingType) => {
       // Skip cancelled bookings
       if (booking.status === 'cancelled') {
         return false;
@@ -232,7 +232,7 @@ export class BookingService {
       }
 
       const booking = hotel.bookings.find(
-        (b: any) => b._id.toString() === bookingId && b.userId === userId
+        (b: BookingType) => b._id.toString() === bookingId && b.userId === userId
       );
 
       if (!booking) {
