@@ -15,7 +15,7 @@ userSchema.pre("save", async function (next) {
       if (!this.password || typeof this.password !== 'string') {
         throw new Error('Invalid password');
       }
-      this.password = await bcrypt.hash(this.password, 12);
+      this.password = await bcrypt.hash(this.password, 10);
     }
     next();
   } catch (error) {
