@@ -1,69 +1,30 @@
-import redis from '../config/redis';
-
 export class CacheService {
-  private static isRedisAvailable = true;
-
   /**
-   * Get cached value
+   * Get cached value - No-op without Redis
    */
   static async get<T>(key: string): Promise<T | null> {
-    if (!this.isRedisAvailable || !key) return null;
-
-    try {
-      const cached = await redis.get(key);
-      return cached ? JSON.parse(cached) : null;
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      console.warn('Cache GET error:', errorMsg);
-      this.isRedisAvailable = false;
-      return null;
-    }
+    return null;
   }
 
   /**
-   * Set cache value with TTL (time to live in seconds)
+   * Set cache value - No-op without Redis
    */
   static async set(key: string, value: any, ttl: number = 300): Promise<void> {
-    if (!this.isRedisAvailable || !key) return;
-
-    try {
-      await redis.setex(key, ttl, JSON.stringify(value));
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      console.warn('Cache SET error:', errorMsg);
-      this.isRedisAvailable = false;
-    }
+    return;
   }
 
   /**
-   * Delete single cache key
+   * Delete single cache key - No-op without Redis
    */
   static async del(key: string): Promise<void> {
-    if (!this.isRedisAvailable || !key) return;
-
-    try {
-      await redis.del(key);
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      console.warn('Cache DEL error:', errorMsg);
-    }
+    return;
   }
 
   /**
-   * Delete all keys matching pattern
+   * Delete all keys matching pattern - No-op without Redis
    */
   static async delPattern(pattern: string): Promise<void> {
-    if (!this.isRedisAvailable || !pattern) return;
-
-    try {
-      const keys = await redis.keys(pattern);
-      if (keys.length > 0) {
-        await redis.del(...keys);
-      }
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Unknown error';
-      console.warn('Cache DEL PATTERN error:', errorMsg);
-    }
+    return;
   }
 
   /**

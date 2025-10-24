@@ -1,14 +1,22 @@
 import { doubleCsrf } from 'csrf-csrf';
 import { Request, Response } from 'express';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 const csrfConfig = doubleCsrf({
   getSecret: () => process.env.JWT_SECRET_KEY!,
-  getSessionIdentifier: (req: Request) => (req as any).sessionID || '',
-  cookieName: '__Host-psifi.x-csrf-token',
+  getSessionIdentifier: (req: Request) => {
+    // Use user ID from auth token as session identifier
+    const userId = (req as any).userId || '';
+    return userId;
+  },
+  // Use __Host- prefix in production for extra security
+  cookieName: isProduction ? '__Host-x-csrf-token' : 'x-csrf-token',
   cookieOptions: {
-    sameSite: 'strict',
+    // 'none' required for cross-domain cookies (frontend/backend on different domains)
+    sameSite: isProduction ? 'none' : 'lax',
     path: '/',
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProduction,
     httpOnly: true,
   },
   size: 64,
