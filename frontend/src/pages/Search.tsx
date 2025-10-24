@@ -29,7 +29,7 @@ const Search = () => {
     types: selectedHotelTypes,
     facilities: selectedFacilities,
     maxPrice: selectedPrice?.toString(),
-    sortOption,
+    sortOption: sortOption || undefined,
   };
 
   const { data: hotelData, isError } = useQuery({
