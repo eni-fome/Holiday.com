@@ -75,6 +75,7 @@ class ApiClient {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ refreshToken }),
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -127,6 +128,7 @@ class ApiClient {
       return fetch(`${this.baseUrl}${endpoint}`, {
         ...fetchOptions,
         headers,
+        credentials: 'include', // Required for CSRF cookies
       });
     };
 

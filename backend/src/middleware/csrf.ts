@@ -3,12 +3,15 @@ import { Request, Response } from 'express';
 
 const csrfConfig = doubleCsrf({
   getSecret: () => process.env.JWT_SECRET_KEY!,
-  getSessionIdentifier: (req: Request) => (req as any).sessionID || '',
-  cookieName: '__Host-psifi.x-csrf-token',
+  getSessionIdentifier: (req: Request) => {
+    // Use a cookie-based identifier instead of sessionID
+    return req.cookies?.['csrf-session'] || '';
+  },
+  cookieName: 'x-csrf-token',
   cookieOptions: {
-    sameSite: 'strict',
+    sameSite: 'none', // Changed from 'strict' to allow cross-site cookies
     path: '/',
-    secure: process.env.NODE_ENV === 'production',
+    secure: true, // Always true for production
     httpOnly: true,
   },
   size: 64,
