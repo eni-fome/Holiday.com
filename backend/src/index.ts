@@ -13,7 +13,6 @@ import hotelRoutes from './routes/hotels';
 import bookingRoutes from './routes/my-bookings';
 import { setupSecurity } from './middleware/security';
 import { connectDatabase } from './config/database';
-import { csrfProtection, csrfTokenRoute } from './middleware/csrf';
 
 // Cloudinary configuration
 cloudinary.config({
@@ -70,15 +69,12 @@ app.get('/api/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// CSRF token endpoint
-app.get('/api/csrf-token', csrfTokenRoute);
-
-// API routes with rate limiting and CSRF protection
-app.use('/api/auth', authLimiter, csrfProtection, authRoutes);
-app.use('/api/users', apiLimiter, csrfProtection, userRoutes);
-app.use('/api/my-hotels', uploadLimiter, csrfProtection, myHotelRoutes);
-app.use('/api/hotels', apiLimiter, csrfProtection, hotelRoutes);
-app.use('/api/my-bookings', apiLimiter, csrfProtection, bookingRoutes);
+// API routes with rate limiting
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/users', apiLimiter, userRoutes);
+app.use('/api/my-hotels', uploadLimiter, myHotelRoutes);
+app.use('/api/hotels', apiLimiter, hotelRoutes);
+app.use('/api/my-bookings', apiLimiter, bookingRoutes);
 
 // Error handling middleware
 app.use((err: Error, req: Request, res: Response, next: express.NextFunction) => {
