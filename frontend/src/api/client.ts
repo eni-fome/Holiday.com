@@ -1,5 +1,4 @@
 import { useAuthStore } from '../store/auth.store';
-import { getCsrfToken } from '../utils/csrf';
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://holiday-com-backend.onrender.com';
 
@@ -52,11 +51,6 @@ class ApiClient {
 
     if (accessToken) {
       headers['Authorization'] = `Bearer ${accessToken}`;
-    }
-
-    const csrfToken = getCsrfToken();
-    if (csrfToken) {
-      headers['x-csrf-token'] = csrfToken;
     }
 
     return headers;
