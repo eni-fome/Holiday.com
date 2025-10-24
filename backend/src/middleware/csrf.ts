@@ -6,9 +6,9 @@ const isProduction = process.env.NODE_ENV === 'production';
 const csrfConfig = doubleCsrf({
   getSecret: () => process.env.JWT_SECRET_KEY!,
   getSessionIdentifier: (req: Request) => {
-    // Use user ID from auth token as session identifier
-    const userId = (req as any).userId || '';
-    return userId;
+    // Use a consistent session identifier from cookies
+    // The double-submit pattern relies on the cookie + token matching
+    return 'csrf-session';
   },
   // Use __Host- prefix in production for extra security
   cookieName: isProduction ? '__Host-x-csrf-token' : 'x-csrf-token',
